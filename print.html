@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>พิมพ์เอกสาร A4 - KIOSK Sales Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#e5e7eb;color:#000;font-family:'Sarabun',sans-serif;font-size:13px;line-height:1.45}
+.bar{position:sticky;top:0;z-index:20;background:#14181e;color:#fff;padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.bar input,.bar select,.bar button{font:inherit;padding:5px 10px;border-radius:6px;border:1px solid #374151;background:#1f2937;color:#fff}
+.bar button{cursor:pointer;background:#b8893a;border-color:#b8893a;font-weight:600}
+.bar button.sec{background:#374151;border-color:#4b5563}
+.bar a{color:#e0b25a;text-decoration:none;margin-right:6px}
+.pages{padding:16px 0;display:flex;flex-direction:column;align-items:center;gap:16px}
+.page{width:210mm;min-height:297mm;background:#fff;padding:12mm 14mm;box-shadow:0 4px 20px rgba(0,0,0,.15);position:relative}
+.page.hide{display:none}
+/* Form 1: Monthly Report */
+.f1{font-size:13.5px;line-height:2.05}
+.f1 .row{display:flex;gap:8px;align-items:baseline;flex-wrap:nowrap}
+.f1 .dot{flex:1;border-bottom:1px dotted #000;min-width:40px;padding:0 4px;height:1.5em;line-height:1.5em}
+.f1 .dot[contenteditable]{outline:none}
+.f1 .sec{margin-top:8px;font-weight:600}
+.f1 .lines .dot{display:block;width:100%;margin-top:2px}
+.f1 .grid2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+/* Form 2 & 3: Commission Sheets */
+.ftitle{text-align:center;font-size:16px;font-weight:700;margin-bottom:8px}
+.fhead{display:grid;grid-template-columns:1fr 180px;gap:6px 16px;margin-bottom:8px;font-size:13px}
+.fbox-row{display:flex;align-items:center;gap:6px}
+.fbox-row label{min-width:72px;text-align:right}
+.fbox{flex:1;border:1.5px solid #000;height:24px;padding:0 6px;display:flex;align-items:center;font-weight:600}
+table.ftbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+table.ftbl th,table.ftbl td{border:1px solid #000;padding:2px 5px;height:22px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+table.ftbl th{text-align:center;font-weight:700;background:#fff}
+table.ftbl td.r{text-align:right}
+table.ftbl td.c{text-align:center}
+.tot-row{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:4px;font-weight:700}
+.tot-box{width:120px;border:2px solid #000;height:26px;display:flex;align-items:center;justify-content:flex-end;padding:0 6px}
+.sum-box{border:1.5px solid #000;margin-top:8px;padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:12px}
+.sum-item{display:flex;align-items:baseline;gap:6px}
+.sum-item span.nm{min-width:125px}
+.sum-item span.ln{flex:1;border-bottom:1px solid #666;text-align:center;font-weight:700}
+.f3-foot{display:grid;grid-template-columns:1fr 1fr;gap:8px 32px;margin-top:14px;font-size:12.5px}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .bar{display:none!important}
+  .pages{padding:0;gap:0;display:block}
+  .page{box-shadow:none;margin:0;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto;break-after:auto}
+}
+</style>
+</head>
+<body>
+<div class="bar no-print">
+  <a href="index.html">← กลับหน้าหลัก</a>
+  <label>เดือน <select id="sel"></select></label>
+  <input id="pc" placeholder="ชื่อ PC" style="width:130px">
+  <input id="branch" placeholder="โฮมโปรสาขา" style="width:140px">
+  <input id="comm" type="number" placeholder="% คอม" style="width:75px">
+  <select id="view">
+    <option value="all">ทั้งหมด (3 หน้า)</option>
+    <option value="1">1. รายงานประจำเดือน</option>
+    <option value="2">2. ใบนำส่ง ตู้เซฟ</option>
+    <option value="3">3. ใบนำส่ง ตู้เหล็ก (SO/POS)</option>
+  </select>
+  <button onclick="window.print()">พิมพ์ / บันทึก PDF (A4)</button>
+  <span id="msg" style="color:#9ca3af;font-size:12px">กำลังโหลด…</span>
+</div>
+
+<div class="pages">
+  <!-- PAGE 1: รายงานประจำเดือน -->
+  <section class="page f1" data-p="1">
+    <div class="row"><span>รายงานประจำเดือน พนักงานขาย ประจำเดือน</span><span class="dot" id="p1-m"></span><span>ปี</span><span class="dot" id="p1-y" style="max-width:90px"></span></div>
+    <div class="row" style="margin-top:12px"><span>ยอดขายแบรนด์</span><span class="dot" id="p1-tot" style="max-width:180px"></span><span>บาท</span></div>
+    <div class="row"><span>ยอดขายแผนก</span><span class="dot" contenteditable></span><span>บาท</span></div>
+    <div class="row"><span>ยอดขาย คู่แข่ง แบรนด์</span><span class="dot" contenteditable></span><span>ยอด</span><span class="dot" contenteditable style="max-width:140px"></span><span>บาท</span></div>
+    <div class="row"><span>ยอดขาย คู่แข่ง แบรนด์</span><span class="dot" contenteditable></span><span>ยอด</span><span class="dot" contenteditable style="max-width:140px"></span><span>บาท</span></div>
+
+    <div class="sec">โปรโมชั่นคู่แข่ง</div>
+    <div class="lines"><span class="dot" contenteditable></span><span class="dot" contenteditable></span><span class="dot" contenteditable></span></div>
+
+    <div class="sec">ปัญหาและข้อร้องเรียน</div>
+    <div class="lines"><span class="dot" contenteditable></span><span class="dot" contenteditable></span><span class="dot" contenteditable></span><span class="dot" contenteditable></span><span class="dot" contenteditable></span></div>
+
+    <div class="sec">สินค้าขายดี</div>
+    <div class="row"><span>1.</span><span class="dot" id="p1-t1" style="max-width:160px"></span><span>ทำไมขายดี</span><span class="dot" contenteditable></span></div>
+    <div class="row"><span>2.</span><span class="dot" id="p1-t2" style="max-width:160px"></span><span>ทำไมขายดี</span><span class="dot" contenteditable></span></div>
+    <div class="row"><span>3.</span><span class="dot" id="p1-t3" style="max-width:160px"></span><span>ทำไมขายดี</span><span class="dot" contenteditable></span></div>
+
+    <div class="sec">สินค้า นอนมูฟ เกิน 90 วัน ของแบรนด์ที่สาขามี</div>
+    <div class="grid2">
+      <div class="row"><span>1.</span><span class="dot" contenteditable></span></div><div class="row"><span>2.</span><span class="dot" contenteditable></span></div><div class="row"><span>3.</span><span class="dot" contenteditable></span></div>
+      <div class="row"><span>4.</span><span class="dot" contenteditable></span></div><div class="row"><span>5.</span><span class="dot" contenteditable></span></div><div class="row"><span>6.</span><span class="dot" contenteditable></span></div>
+    </div>
+
+    <div class="sec">สินค้าที่ต้องการมีสต็อก</div>
+    <div class="grid2">
+      <div class="row"><span>1.</span><span class="dot" contenteditable></span></div><div class="row"><span>2.</span><span class="dot" contenteditable></span></div><div class="row"><span>3.</span><span class="dot" contenteditable></span></div>
+      <div class="row"><span>4.</span><span class="dot" contenteditable></span></div><div class="row"><span>5.</span><span class="dot" contenteditable></span></div><div class="row"><span>6.</span><span class="dot" contenteditable></span></div>
+    </div>
+
+    <div class="row" style="margin-top:22px;padding-left:220px"><span>ชื่อ</span><span class="dot" id="p1-pc"></span><span>สาขา</span><span class="dot" id="p1-br"></span></div>
+  </section>
+
+  <!-- PAGE 2: ใบนำส่งค่าคอมมิชชั่น ตู้เซฟ -->
+  <section class="page" data-p="2">
+    <div class="ftitle">ใบนำส่งค่าคอมมิชชั่น ตู้เซฟ</div>
+    <div class="fhead">
+      <div class="fbox-row"><label>ชื่อ</label><div class="fbox" id="p2-pc"></div></div>
+      <div class="fbox-row"><label style="min-width:42px">เดือน</label><div class="fbox" id="p2-m"></div></div>
+      <div class="fbox-row"><label>โฮมโปรสาขา</label><div class="fbox" id="p2-br"></div></div>
+      <div></div>
+    </div>
+    <table class="ftbl">
+      <colgroup><col style="width:16%"><col style="width:19%"><col style="width:33%"><col style="width:14%"><col style="width:18%"></colgroup>
+      <thead><tr><th>วันที่สั่งซื้อ</th><th>รหัสสินค้า ARTICLE</th><th>รุ่นสินค้า</th><th>สี</th><th>ราคาขาย</th></tr></thead>
+      <tbody id="p2-tb"></tbody>
+    </table>
+    <div class="tot-row"><span>สรุปรายการ &nbsp;&nbsp; ยอดรวม</span><div class="tot-box" id="p2-tot"></div></div>
+    <div class="sum-box" id="p2-sum"></div>
+  </section>
+
+  <!-- PAGE 3: ใบนำส่งค่าคอมมิชชั่น ตู้เหล็ก (SO / POS) -->
+  <section class="page" data-p="3">
+    <div class="ftitle">ใบนำส่งค่าคอมมิชชั่น กรณีขายผ่าน SO / POS</div>
+    <div class="fhead">
+      <div class="fbox-row"><label>ชื่อ</label><div class="fbox" id="p3-pc"></div></div>
+      <div class="fbox-row"><label style="min-width:42px">เดือน</label><div class="fbox" id="p3-m"></div></div>
+      <div class="fbox-row"><label>โฮมโปรสาขา</label><div class="fbox" id="p3-br"></div></div>
+      <div></div>
+    </div>
+    <table class="ftbl">
+      <colgroup><col style="width:13%"><col style="width:14%"><col style="width:13%"><col style="width:22%"><col style="width:11%"><col style="width:13%"><col style="width:14%"></colgroup>
+      <thead><tr><th>วันที่สั่งซื้อ</th><th>เลขที่ใบรายงาน</th><th>Article</th><th>รุ่นสินค้า</th><th>สี</th><th>ราคาขาย</th><th>หมายเหตุ</th></tr></thead>
+      <tbody id="p3-tb"></tbody>
+    </table>
+    <div class="tot-row"><span>ยอดรวม</span><div class="tot-box" id="p3-tot"></div></div>
+    <div class="f3-foot">
+      <div class="fbox-row"><label style="min-width:95px">เปอร์เซ็นต์ค่าคอม</label><div class="fbox" id="p3-pct"></div></div>
+      <div class="fbox-row"><label style="min-width:95px">จำนวนเงินค่าคอม</label><div class="fbox" id="p3-com"></div></div>
+      <div class="fbox-row"><label style="min-width:95px">ลงชื่อPC</label><div class="fbox" id="p3-sign"></div></div>
+      <div class="fbox-row"><label style="min-width:95px">ผู้ตรวจสอบ</label><div class="fbox"></div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDkbqG_ykyaj2Ih1Cz5CuE_FJQAULg-kW4OZHPB5fYJTxvCPPQrcAeUpbHzEnGNA/pub?gid=346035930&single=true&output=csv";
+const MN=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const MODELS=["SA-350EDP50","SA-500EDP50","SA-530EDP80","SA-600EDP100","SA-151-HSEขาว25","SA-151-YLA ดำ35","SA-71ELF ดำ20","WIFI SA-FF-50","SA-20EDP BM10","SA-20EDP WH10"];
+const $=id=>document.getElementById(id), f=n=>Math.round(n).toLocaleString("th-TH");
+const key=(y,i)=>`${y}-${String(i+1).padStart(2,"0")}`;
+let rows=[];
+
+function csv(t){const o=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];
+ if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+ else if(ch=='"')q=true;else if(ch==","){r.push(c);c=""}else if(ch=="\n"){r.push(c);o.push(r);r=[];c=""}else if(ch!="\r")c+=ch}
+ if(c||r.length){r.push(c);o.push(r)}return o}
+
+function fromCSV(tx){const t=csv(tx),hi=t.findIndex(r=>r.some(x=>x.trim()==="Article")&&r.some(x=>x.includes("ยอดขาย")));
+ if(hi<0)throw new Error("ไม่พบหัวตาราง");
+ const h=t[hi].map(x=>x.trim()),ix=k=>h.findIndex(x=>x.includes(k)),n=s=>parseFloat((s||"0").replace(/,/g,""))||0;
+ const I={y:ix("ปี"),m:ix("เดือน"),art:ix("Article"),cat:ix("หมวด"),model:ix("รุ่น"),color:ix("สี"),price:ix("ราคา/ชิ้น"),qty:ix("จำนวนชิ้น"),amt:ix("ยอดขาย"),note:ix("หมายเหตุ"),dt:ix("วันที่")};
+ const g=(r,k)=>(I[k]>-1?(r[I[k]]||""):"").trim();
+ return t.slice(hi+1).map(r=>({y:+g(r,"y"),m:g(r,"m"),art:g(r,"art"),cat:g(r,"cat"),model:g(r,"model"),color:g(r,"color"),price:n(g(r,"price")),qty:n(g(r,"qty")),amt:n(g(r,"amt")),note:g(r,"note"),dt:g(r,"dt")})).filter(r=>r.y&&MN.includes(r.m)&&r.amt>0)}
+
+function fillRows(tb, list, cols, minRows=22){
+ let html="";
+ for(let i=0;i<Math.max(minRows,list.length);i++){
+  const r=list[i];
+  html+=`<tr>${cols.map(c=>r?`<td class="${c.cls||""}">${c.fn(r)}</td>`:"<td></td>").join("")}</tr>`;
+ }
+ tb.innerHTML=html;
+}
+
+function render(){
+ const sel=$("sel").value,[Y,M]=sel.split("-").map(Number),mi=M-1,mName=MN[mi],yTh=Y+543;
+ const pc=$("pc").value.trim(),br=$("branch").value.trim(),cm=parseFloat($("comm").value)||0;
+ localStorage.setItem("k_pc",pc);localStorage.setItem("k_br",br);localStorage.setItem("k_cm",$("comm").value);
+
+ const cur=rows.filter(r=>key(r.y,MN.indexOf(r.m))===sel);
+ const tot=cur.reduce((a,r)=>a+r.amt,0);
+ const byM={};cur.forEach(r=>byM[r.model]=(byM[r.model]||0)+r.amt);
+ const top=Object.entries(byM).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+ $("p1-m").textContent=mName;$("p1-y").textContent=yTh;$("p1-tot").textContent=tot?f(tot):"";
+ $("p1-t1").textContent=top[0]?top[0][0]:"";$("p1-t2").textContent=top[1]?top[1][0]:"";$("p1-t3").textContent=top[2]?top[2][0]:"";
+ $("p1-pc").textContent=pc;$("p1-br").textContent=br;
+
+ const safes=cur.filter(r=>r.cat==="ตู้เซฟ"),sTot=safes.reduce((a,r)=>a+r.amt,0);
+ $("p2-pc").textContent=pc;$("p2-br").textContent=br;$("p2-m").textContent=`${mName} ${yTh}`;
+ fillRows($("p2-tb"),safes,[
+  {cls:"c",fn:r=>r.dt||""},{cls:"c",fn:r=>r.art},{fn:r=>r.model+(r.qty>1?` (x${r.qty})`:"")},{cls:"c",fn:r=>r.color},{cls:"r",fn:r=>f(r.amt)}
+ ]);
+ $("p2-tot").textContent=sTot?f(sTot):"";
+ $("p2-sum").innerHTML=MODELS.map(m=>{
+  const base=m.split(" ")[0].replace("WIFI","");
+  const q=safes.filter(r=>r.model.toUpperCase().includes(base.toUpperCase())).reduce((a,r)=>a+r.qty,0);
+  return `<div class="sum-item"><span class="nm">${m}</span><span class="ln">${q||""}</span><span>ตัว</span></div>`;
+ }).join("");
+
+ const steels=cur.filter(r=>r.cat==="ตู้เหล็ก"),stTot=steels.reduce((a,r)=>a+r.amt,0);
+ $("p3-pc").textContent=pc;$("p3-br").textContent=br;$("p3-m").textContent=`${mName} ${yTh}`;
+ fillRows($("p3-tb"),steels,[
+  {cls:"c",fn:r=>r.dt||""},{cls:"c",fn:()=>""},{cls:"c",fn:r=>r.art},{fn:r=>r.model+(r.qty>1?` (x${r.qty})`:"")},{cls:"c",fn:r=>r.color},{cls:"r",fn:r=>f(r.amt)},{fn:r=>r.note}
+ ]);
+ $("p3-tot").textContent=stTot?f(stTot):"";
+ $("p3-pct").textContent=cm?cm+"%":"";
+ $("p3-com").textContent=cm&&stTot?f(stTot*cm/100):"";
+ $("p3-sign").textContent=pc;
+}
+
+$("pc").value=localStorage.getItem("k_pc")||"";
+$("branch").value=localStorage.getItem("k_br")||"";
+$("comm").value=localStorage.getItem("k_cm")||"";
+["sel","pc","branch","comm"].forEach(id=>$(id).oninput=render);
+$("view").onchange=e=>{const v=e.target.value;document.querySelectorAll(".page").forEach(p=>p.classList.toggle("hide",v!=="all"&&p.dataset.p!==v))};
+
+(async()=>{try{
+ rows=fromCSV(await(await fetch(CSV_URL+"&t="+Date.now())).text());
+ const now=new Date(),cyc=new Date(now.getFullYear(),now.getMonth()+(now.getDate()>=24?1:0),1),nk=key(cyc.getFullYear(),cyc.getMonth());
+ const ks=[...new Set([...rows.map(r=>key(r.y,MN.indexOf(r.m))),nk])].sort().reverse();
+ $("sel").innerHTML=ks.map(k=>{const[y,m]=k.split("-");return `<option value="${k}" ${k===nk?"selected":""}>${MN[+m-1]} ${+y+543}</option>`}).join("");
+ $("msg").textContent=`โหลดแล้ว ${rows.length} รายการ`;render();
+}catch(e){$("msg").textContent="โหลดไม่สำเร็จ: "+e.message}})();
+</script>
+</body>
+</html>
