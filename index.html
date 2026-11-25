@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KIOSK Sales Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e6e9ed;--card:#fbfcfd;--ink:#14181e;--mute:#78818c;--line:#dde1e6;--brass:#b8893a;--steel:#5b7794;--ok:#1f8a5b;--warn:#c4562b;--sh:0 1px 0 #fff inset,0 8px 28px -14px rgba(20,30,50,.25)}
+:root[data-t=dark]{--bg:#0d1014;--card:#151a20;--ink:#eef1f4;--mute:#8993a0;--line:#262d36;--brass:#e0b25a;--steel:#8fb0d4;--ok:#4cc790;--warn:#ff8a5c;--sh:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -14px #000}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-family:'Prompt',system-ui,sans-serif;line-height:1.5;background:var(--bg) repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px);min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px 60px}
+button,select,input{font:inherit;color:inherit}
+header{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:38px;height:38px;border-radius:50%;border:3px solid var(--brass);position:relative;animation:spin 14s linear infinite}
+.logo:after{content:"";position:absolute;left:50%;top:3px;width:3px;height:11px;margin-left:-1.5px;background:var(--brass);border-radius:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{font-size:1.1rem;font-weight:600;margin:0;line-height:1.2}
+.mute{color:var(--mute);font-size:.8rem}
+.live:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 15px;cursor:pointer;font-size:.88rem;transition:.2s;box-shadow:var(--sh)}
+.pill:hover{border-color:var(--brass)}
+.pill.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pill:disabled{opacity:.35;cursor:default}
+.pill:focus-visible,input:focus-visible,th:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.card{background:var(--card);border-radius:20px;padding:22px;box-shadow:var(--sh);border:1px solid var(--line)}
+.g{display:grid;gap:14px;margin-bottom:14px}
+.g1{grid-template-columns:5fr 7fr}.g2{grid-template-columns:3fr 2fr}.g3{grid-template-columns:1fr 1fr}
+h2{font-size:.92rem;font-weight:500;margin:0 0 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.in{animation:up .7s both cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{opacity:0;transform:translateY(18px)}}
+/* dial */
+.dialbox{position:relative;max-width:300px;margin:0 auto}
+.dial{width:100%;display:block}
+.dial #ticks line{stroke:var(--line);stroke-width:2;stroke-linecap:round;transition:stroke .3s}
+.dial #ticks line.on{stroke:var(--brass)}
+#arc{transition:stroke-dashoffset 1.3s cubic-bezier(.2,.8,.2,1)}
+#knob{transform-origin:150px 150px;transition:transform 1.3s cubic-bezier(.2,.8,.2,1)}
+.ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ctr b{font-size:2.3rem;font-weight:300;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.ctr .p{font-size:1.4rem;font-weight:500;color:var(--brass)}
+.status{text-align:center;font-size:.88rem;margin-top:10px;min-height:44px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.chip{font-size:.76rem;padding:4px 11px;border-radius:999px;background:var(--bg);color:var(--mute)}
+.chip b{color:var(--ink);font-weight:500}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:start}
+.st{padding:16px;border-radius:14px;background:var(--bg)}
+.st b{display:block;font-size:1.3rem;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.3}
+.st small{font-size:.75rem;color:var(--mute)}
+/* chart */
+.chart{display:flex;align-items:flex-end;gap:6px;height:210px;position:relative;border-bottom:1px solid var(--line)}
+.m{flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;border:0;background:none;padding:0;cursor:pointer}
+.m i{display:block;width:100%;max-width:38px;border-radius:7px 7px 0 0;background:var(--line);transform-origin:bottom;animation:grow .9s both cubic-bezier(.2,.8,.2,1);min-height:3px;transition:background .2s}
+.m:hover i{background:var(--steel)}
+.m.on i{background:var(--brass)}
+.m:focus-visible{outline:2px solid var(--brass)}
+@keyframes grow{from{transform:scaleY(0)}}
+.tl{position:absolute;left:0;right:0;border-top:1.5px dashed var(--steel);pointer-events:none}
+.tl span{position:absolute;right:0;top:-19px;font-size:.7rem;color:var(--steel)}
+.lb{display:flex;gap:6px;margin-top:8px}.lb span{flex:1;text-align:center;font-size:.68rem;color:var(--mute)}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 11px;border-radius:9px;font-size:.78rem;opacity:0;transition:opacity .15s;z-index:9;white-space:nowrap}
+/* donut */
+.dn{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center}
+.dn svg{width:150px;height:150px}
+.dn circle{transition:stroke-dasharray 1.2s cubic-bezier(.2,.8,.2,1),stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)}
+.lg{flex:1;min-width:150px}
+.lg div{display:flex;justify-content:space-between;padding:7px 0;font-size:.88rem;border-bottom:1px solid var(--line);gap:10px}
+.lg div:last-child{border:0}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+/* top */
+.it{padding:9px 0;font-size:.9rem}
+.it .r{display:flex;justify-content:space-between;gap:10px}
+.it .bar{height:6px;background:var(--bg);border-radius:9px;overflow:hidden;margin-top:6px}
+.it .bar i{display:block;height:100%;border-radius:9px;transform-origin:left;animation:sx 1s both cubic-bezier(.2,.8,.2,1)}
+@keyframes sx{from{transform:scaleX(0)}}
+.num{font-variant-numeric:tabular-nums}
+.yr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* table */
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools input{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 14px;font-size:.85rem;width:170px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:620px}
+th{color:var(--mute);font-weight:400;text-align:left;padding:8px 6px;cursor:pointer;white-space:nowrap;user-select:none}
+th:hover{color:var(--ink)}
+td{padding:10px 6px;border-top:1px solid var(--line)}
+td.n,th.n{text-align:right}
+tbody tr{animation:up .5s both}
+tbody tr:hover{background:var(--bg)}
+.empty{color:var(--mute);padding:14px 0;font-size:.88rem}
+.cf{position:fixed;top:-12px;width:9px;height:14px;z-index:20;animation:fall linear forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
+footer{text-align:center;margin-top:18px}
+@media (max-width:860px){.g1,.g2,.g3{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*,*:before{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="logo"></div><div><h1>KIOSK Sales Vault</h1><div class="mute live" id="asof">กำลังโหลด…</div></div></div>
+    <div class="ctl">
+      <button class="pill" id="prev" aria-label="เดือนก่อน">◀</button>
+      <select class="pill" id="sel" aria-label="เลือกเดือน"></select>
+      <button class="pill" id="next" aria-label="เดือนถัดไป">▶</button>
+      <button class="pill" id="theme" aria-label="สลับโหมดมืด/สว่าง">◐</button>
+    </div>
+  </header>
+
+  <div class="g g1">
+    <section class="card in" style="animation-delay:.05s">
+      <h2><span id="h-label">ยอดสะสม</span><span class="mute" id="h-target"></span></h2>
+      <div class="dialbox">
+        <svg class="dial" viewBox="0 0 300 300" aria-hidden="true">
+          <g id="ticks"></g>
+          <circle cx="150" cy="150" r="104" fill="none" stroke="var(--line)" stroke-width="10"/>
+          <circle id="arc" cx="150" cy="150" r="104" fill="none" stroke="var(--brass)" stroke-width="10" stroke-linecap="round" transform="rotate(-90 150 150)" stroke-dasharray="653.45" stroke-dashoffset="653.45"/>
+          <g id="knob"><circle cx="150" cy="46" r="9" fill="var(--card)" stroke="var(--brass)" stroke-width="3"/></g>
+        </svg>
+        <div class="ctr"><span class="mute">บาท</span><b id="h-total">0</b><span class="p" id="h-pct">0%</span></div>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <section class="stats in" style="animation-delay:.15s">
+      <div class="card st"><small>เฉลี่ยต่อวัน</small><b id="s-avg">0</b></div>
+      <div class="card st"><small>ต้องขายต่อวัน (ที่เหลือ)</small><b id="s-need">-</b></div>
+      <div class="card st"><small>คาดการณ์สิ้นเดือน</small><b id="s-fc">0</b></div>
+      <div class="card st"><small>จำนวนชิ้น</small><b id="s-qty">0</b></div>
+      <div class="card st"><small>ราคาเฉลี่ยต่อชิ้น</small><b id="s-ap">0</b></div>
+      <div class="card st"><small>เทียบเดือนก่อน</small><b id="s-dl">-</b></div>
+      <div class="card st" style="grid-column:1/-1"><small>สรุปทั้งปี</small>
+        <div class="yr" style="margin-top:8px;grid-template-columns:repeat(4,1fr)">
+          <div><b id="y-tot">0</b><small>ยอดรวม</small></div><div><b id="y-avg">0</b><small>เฉลี่ย/เดือน</small></div>
+          <div><b id="y-best">-</b><small>เดือนสูงสุด</small></div><div><b id="y-hit">0</b><small>เดือนถึงเป้า</small></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="ctl" style="margin:6px 0 14px"><span class="mute">ดูรายละเอียด</span>
+    <button class="pill on" data-c="all">ทั้งหมด</button><button class="pill" data-c="ตู้เซฟ">ตู้เซฟ</button><button class="pill" data-c="ตู้เหล็ก">ตู้เหล็ก</button>
+  </div>
+
+  <div class="g g2">
+    <section class="card in" style="animation-delay:.25s">
+      <h2><span id="c-title">ยอดขายรายเดือน</span><span class="ctl"><button class="pill on" data-md="m">รายเดือน</button><button class="pill" data-md="cum">สะสม</button></span></h2>
+      <div class="chart" id="chart"></div><div class="lb" id="lb"></div>
+    </section>
+    <section class="card in" style="animation-delay:.3s">
+      <h2>สัดส่วนเดือนนี้</h2>
+      <div class="dn">
+        <svg viewBox="0 0 150 150"><g transform="rotate(-90 75 75)" fill="none" stroke-width="16">
+          <circle cx="75" cy="75" r="56" stroke="var(--line)"/>
+          <circle id="d1" cx="75" cy="75" r="56" stroke="var(--brass)" stroke-dasharray="0 352"/>
+          <circle id="d2" cx="75" cy="75" r="56" stroke="var(--steel)" stroke-dasharray="0 352"/></g></svg>
+        <div class="lg" id="lg"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="g g3">
+    <section class="card in" style="animation-delay:.35s"><h2>รุ่นขายดี</h2><div id="top"></div></section>
+    <section class="card in" style="animation-delay:.4s"><h2>ยอดขายแยกหมวดทั้งปี</h2><div id="ycat"></div></section>
+  </div>
+
+  <section class="card in" style="animation-delay:.45s">
+    <h2><span>รายการขาย</span><span class="tools"><input id="q" placeholder="ค้นหารุ่น / สี / Article" aria-label="ค้นหา"><button class="pill" id="exp">ดาวน์โหลด CSV</button></span></h2>
+    <div class="tw"><table><thead><tr>
+      <th data-k="model">รุ่น</th><th data-k="cat">หมวด</th><th data-k="color">สี</th><th class="n" data-k="price">ราคา/ชิ้น</th><th class="n" data-k="qty">ชิ้น</th><th class="n" data-k="amt">ยอดขาย</th><th data-k="note">หมายเหตุ</th>
+    </tr></thead><tbody id="tb"></tbody></table></div>
+  </section>
+  <footer class="mute" id="foot"></footer>
+</div>
+<div id="tip"></div>
+
+<script>
+/* ===== ตั้งค่า ===== */
+const CSV_SRC="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDkbqG_ykyaj2Ih1Cz5CuE_FJQAULg-kW4OZHPB5fYJTxvCPPQrcAeUpbHzEnGNA/pub?gid=346035930&single=true&output=csv", SNAP_DATE="25 พ.ย. 2569";
+const CSV_URL=CSV_SRC;            // ลิงก์ CSV ของแท็บ "กรอกยอดรายเดือน" (Google Sheets → เผยแพร่ไปยังเว็บ → CSV) เว้นว่าง = ใช้ข้อมูลฝังจาก Excel
+const TARGET=100000, TARGET_OVERRIDE={}, REFRESH_MIN=5;   // เป้ามาตรฐาน / เป้าเฉพาะเดือน เช่น {"2026-12":150000}
+const EMBED=[
+ {y:2026,m:"พฤศจิกายน",art:"1254330",cat:"ตู้เหล็ก",model:"KOD-3KC",color:"เทา",price:2900,qty:1,amt:2900,note:""},
+ {y:2026,m:"พฤศจิกายน",art:"1254346",cat:"ตู้เหล็ก",model:"KGD-3KC",color:"เทา(ที่โชว์)",price:2900,qty:1,amt:2900,note:""},
+ {y:2026,m:"พฤศจิกายน",art:"1254916",cat:"ตู้เหล็ก",model:"USB-4",color:"เทา",price:4030,qty:1,amt:4030,note:""},
+ {y:2026,m:"พฤศจิกายน",art:"1232437",cat:"ตู้เซฟ",model:"SA-530EDP",color:"ดำ",price:10800,qty:3,amt:32400,note:""},
+ {y:2026,m:"พฤศจิกายน",art:"1232464",cat:"ตู้เซฟ",model:"SA-500EDP",color:"ดำ",price:7670,qty:3,amt:23010,note:""},
+ {y:2026,m:"พฤศจิกายน",art:"1261104",cat:"ตู้เซฟ",model:"SA-151-HSE",color:"ขาว",price:2590,qty:1,amt:2590,note:"เก๋า"},
+ {y:2026,m:"พฤศจิกายน",art:"1261104",cat:"ตู้เซฟ",model:"SA-151-HSE",color:"ขาว",price:2590,qty:1,amt:2590,note:""}];
+
+const MN=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const SH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const $=id=>document.getElementById(id), f=n=>Math.round(n).toLocaleString("th-TH");
+const key=(y,i)=>`${y}-${String(i+1).padStart(2,"0")}`, sum=(l,k)=>l.reduce((a,r)=>a+(k?r[k]:1),0);
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+let rows=[],sel=null,cat="all",md="m",sk="amt",sd=-1,qs="",pv={},fired={};
+
+/* นับเลขวิ่ง */
+function cu(id,v,fm=f,sx=""){const el=$(id),from=pv[id]||0;pv[id]=v;
+  if(reduce){el.textContent=fm(v)+sx;return}
+  const t0=performance.now();(function s(t){const p=Math.min((t-t0)/900,1),e=1-Math.pow(1-p,3);el.textContent=fm(from+(v-from)*e)+sx;if(p<1)requestAnimationFrame(s)})(t0)}
+
+function csv(t){const o=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];
+ if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+ else if(ch=='"')q=true;else if(ch==","){r.push(c);c=""}else if(ch=="\n"){r.push(c);o.push(r);r=[];c=""}else if(ch!="\r")c+=ch}
+ if(c||r.length){r.push(c);o.push(r)}return o}
+function fromCSV(tx){const t=csv(tx),hi=t.findIndex(r=>r.some(x=>x.trim()==="Article")&&r.some(x=>x.includes("ยอดขาย")));
+ if(hi<0)throw new Error("ไม่พบแถวหัวตาราง (Article / ยอดขาย)");
+ const h=t[hi].map(x=>x.trim()),ix=k=>h.findIndex(x=>x.includes(k)),n=s=>parseFloat((s||"0").replace(/,/g,""))||0;
+ const I={y:ix("ปี"),m:ix("เดือน"),art:ix("Article"),cat:ix("หมวด"),model:ix("รุ่น"),color:ix("สี"),price:ix("ราคา/ชิ้น"),qty:ix("จำนวนชิ้น"),amt:ix("ยอดขาย"),note:ix("หมายเหตุ")};
+ const g=(r,k)=>(I[k]>-1?(r[I[k]]||""):"").trim();
+ return t.slice(hi+1).map(r=>({y:+g(r,"y"),m:g(r,"m"),art:g(r,"art"),cat:g(r,"cat"),model:g(r,"model"),color:g(r,"color"),price:n(g(r,"price")),qty:n(g(r,"qty")),amt:n(g(r,"amt")),note:g(r,"note")})).filter(r=>r.y&&MN.includes(r.m)&&r.amt>0)}
+
+/* สร้างขีดหน้าปัด */
+for(let i=0;i<60;i++){const L=i%5?5:12,l=document.createElementNS("http://www.w3.org/2000/svg","line");
+ l.setAttribute("x1",150);l.setAttribute("x2",150);l.setAttribute("y1",14);l.setAttribute("y2",14+L);l.setAttribute("transform",`rotate(${i*6} 150 150)`);
+ l.style.transitionDelay=(i*18)+"ms";$("ticks").appendChild(l)}
+function dial(p){const c=Math.min(p,100)/100;$("arc").style.strokeDashoffset=653.45*(1-c);$("knob").style.transform=`rotate(${c*360}deg)`;
+ [...$("ticks").children].forEach((l,i)=>l.classList.toggle("on",i<Math.round(c*60)))}
+
+function boom(){if(reduce)return;const cl=["#e0b25a","#8fb0d4","#4cc790","#fff"];
+ for(let i=0;i<70;i++){const s=document.createElement("i");s.className="cf";s.style.left=Math.random()*100+"vw";s.style.background=cl[i%4];
+  s.style.animationDuration=(2+Math.random()*2)+"s";s.style.animationDelay=Math.random()*.6+"s";document.body.appendChild(s);setTimeout(()=>s.remove(),4800)}}
+
+function render(){
+ rows.forEach(r=>r.mi=MN.indexOf(r.m));
+ const now=new Date(),nk=key(now.getFullYear(),now.getMonth());
+ const ys=[...new Set([...rows.map(r=>r.y),now.getFullYear()])];
+ const ks=ys.flatMap(y=>MN.map((_,i)=>key(y,i))).sort();
+ if(!sel||!ks.includes(sel)){const has=rows.some(r=>key(r.y,r.mi)===nk);sel=has?nk:(rows.map(r=>key(r.y,r.mi)).sort().pop()||nk)}
+ $("sel").innerHTML=ks.slice().reverse().map(k=>{const[y,m]=k.split("-");return `<option value="${k}" ${k===sel?"selected":""}>${MN[+m-1]} ${+y+543}</option>`}).join("");
+ $("prev").disabled=sel===ks[0];$("next").disabled=sel===ks[ks.length-1];
+
+ const[Y,M]=sel.split("-").map(Number),mi=M-1,mine=r=>key(r.y,r.mi)===sel;
+ const cur=rows.filter(mine),target=TARGET_OVERRIDE[sel]||TARGET;
+ const total=sum(cur,"amt"),qty=sum(cur,"qty"),dim=new Date(Y,M,0).getDate(),isNow=sel===nk;
+ const el=isNow?Math.max(now.getDate()-1,1):dim,left=dim-el,avg=total/el,fc=avg*dim,pct=total/target*100;
+
+ $("h-label").textContent=`ยอดสะสม ${MN[mi]} ${Y+543}`;$("h-target").textContent="เป้า "+f(target);
+ cu("h-total",total);cu("h-pct",pct,x=>x.toFixed(1),"%");dial(pct);
+ const st=$("status");
+ if(!total){st.className="status mute";st.textContent="ยังไม่มียอดขายในเดือนนี้"}
+ else if(total>=target){st.className="status ok";st.textContent=`ถึงเป้าแล้ว! เกินเป้า ${f(total-target)} บาท`;if(!fired[sel]){fired[sel]=1;setTimeout(boom,700)}}
+ else if(!isNow){st.className="status warn";st.textContent=`ไม่ถึงเป้า ขาดอีก ${f(target-total)} บาท`}
+ else if(fc>=target){st.className="status ok";st.textContent=`อยู่ในเกณฑ์ คาดว่าจะถึงเป้า เหลืออีก ${f(target-total)} บาท`}
+ else{st.className="status warn";st.textContent=`ต่ำกว่าเกณฑ์ ยังขาด ${f(target-total)} บาท ต้องเร่งยอด`}
+
+ cu("s-avg",avg);$("s-need").textContent=isNow&&left>0&&total<target?f((target-total)/left):"-";
+ cu("s-fc",isNow?fc:total);cu("s-qty",qty);cu("s-ap",qty?total/qty:0);
+ const pm=mi?key(Y,mi-1):key(Y-1,11),pt=sum(rows.filter(r=>key(r.y,r.mi)===pm),"amt"),dl=$("s-dl");
+ if(pt){const d=(total-pt)/pt*100;dl.textContent=(d>=0?"▲ +":"▼ ")+d.toFixed(1)+"%";dl.className=d>=0?"ok":"warn"}else{dl.textContent="-";dl.className=""}
+
+ /* ไฮไลต์ */
+ const by=(l,k)=>{const o={};l.forEach(r=>o[r[k]]=(o[r[k]]||0)+r.amt);return Object.entries(o).sort((a,b)=>b[1]-a[1])};
+ const tm=by(cur,"model")[0],tc=by(cur,"cat")[0];
+ $("chips").innerHTML=cur.length?`<span class="chip">รุ่นเด่น <b>${tm[0]}</b></span><span class="chip">${tc[0]} <b>${Math.round(tc[1]/total*100)}%</b> ของยอด</span><span class="chip">รายการ <b>${cur.length}</b></span>`:"";
+
+ /* ภาพรวมทั้งปี */
+ const yr=rows.filter(r=>r.y===Y),mt=MN.map((_,i)=>sum(yr.filter(r=>r.mi===i),"amt")),act=mt.filter(v=>v>0);
+ const bi=mt.indexOf(Math.max(...mt)),yt=sum(mt.map(v=>({v})),"v");
+ cu("y-tot",yt);cu("y-avg",act.length?yt/act.length:0);$("y-best").textContent=yt?SH[bi]:"-";
+ cu("y-hit",mt.filter((v,i)=>v>=(TARGET_OVERRIDE[key(Y,i)]||TARGET)).length,x=>Math.round(x)," เดือน");
+
+ /* กราฟ */
+ const fl=r=>cat==="all"||r.cat===cat,mv=MN.map((_,i)=>sum(yr.filter(r=>r.mi===i&&fl(r)),"amt"));
+ let vals=mv;if(md==="cum"){let a=0;vals=mv.map(v=>a+=v)}
+ const mx=Math.max(1,...vals,md==="m"&&cat==="all"?target*1.15:0);
+ $("c-title").textContent=`${md==="m"?"ยอดขายรายเดือน":"ยอดสะสม"} ปี ${Y+543}${cat==="all"?"":" · "+cat}`;
+ $("chart").innerHTML=vals.map((v,i)=>`<button class="m ${i===mi?"on":""}" data-k="${key(Y,i)}" data-t="${SH[i]} ${Y+543} · ${f(v)} บาท${md==="m"&&cat==="all"?" · "+(v/(TARGET_OVERRIDE[key(Y,i)]||TARGET)*100).toFixed(0)+"% ของเป้า":""}" aria-label="${SH[i]} ${f(v)} บาท"><i style="height:${v/mx*100}%;animation-delay:${i*45}ms"></i></button>`).join("")
+  +(md==="m"&&cat==="all"?`<div class="tl" style="bottom:${target/mx*100}%"><span>เป้า</span></div>`:"");
+ $("lb").innerHTML=SH.map(s=>`<span>${s}</span>`).join("");
+
+ /* โดนัท */
+ const sf=sum(cur.filter(r=>r.cat==="ตู้เซฟ"),"amt"),sc=sum(cur.filter(r=>r.cat==="ตู้เหล็ก"),"amt"),C=351.86;
+ const a=total?sf/total*C:0,b=total?sc/total*C:0;
+ $("d1").style.strokeDasharray=`${a} ${C}`;$("d2").style.strokeDasharray=`${b} ${C}`;$("d2").style.strokeDashoffset=-a;
+ $("lg").innerHTML=[["ตู้เซฟ","var(--brass)",sf,"ตู้เซฟ"],["ตู้เหล็ก","var(--steel)",sc,"ตู้เหล็ก"]].map(([n,c,v])=>`<div><span><span class="dot" style="background:${c}"></span>${n} <span class="mute">${f(sum(cur.filter(r=>r.cat===n),"qty"))} ชิ้น</span></span><span class="num">${f(v)} <span class="mute">${total?Math.round(v/total*100):0}%</span></span></div>`).join("");
+
+ /* รุ่นขายดี + หมวดทั้งปี */
+ const cc=c=>c==="ตู้เซฟ"?"var(--brass)":"var(--steel)",cm=cur.filter(fl),g={};
+ cm.forEach(r=>{g[r.model]=g[r.model]||{amt:0,qty:0,cat:r.cat};g[r.model].amt+=r.amt;g[r.model].qty+=r.qty});
+ const top=Object.entries(g).sort((x,y)=>y[1].amt-x[1].amt).slice(0,5),t0=top[0]?top[0][1].amt:1;
+ $("top").innerHTML=top.length?top.map(([n,v],i)=>`<div class="it"><div class="r"><span>${i+1}. ${n} <span class="mute">${f(v.qty)} ชิ้น</span></span><span class="num">${f(v.amt)}</span></div><div class="bar"><i style="width:${v.amt/t0*100}%;background:${cc(v.cat)};animation-delay:${i*90}ms"></i></div></div>`).join(""):'<div class="empty">ยังไม่มียอดขาย</div>';
+ const yc=by(yr,"cat");$("ycat").innerHTML=yc.length?yc.map(([n,v],i)=>`<div class="it"><div class="r"><span>${n}</span><span class="num">${f(v)} <span class="mute">${Math.round(v/yt*100)}%</span></span></div><div class="bar"><i style="width:${v/yc[0][1]*100}%;background:${cc(n)};animation-delay:${i*90}ms"></i></div></div>`).join(""):'<div class="empty">ยังไม่มียอดขาย</div>';
+
+ table(cm)}
+
+function table(l){const q=qs.trim().toLowerCase();
+ let d=l.filter(r=>!q||[r.model,r.color,r.art,r.note,r.cat].join(" ").toLowerCase().includes(q));
+ d.sort((x,y)=>(typeof x[sk]==="number"?x[sk]-y[sk]:String(x[sk]).localeCompare(String(y[sk]),"th"))*sd);
+ window._tbl=d;
+ $("tb").innerHTML=d.length?d.map((r,i)=>`<tr style="animation-delay:${i*35}ms"><td>${r.model}<div class="mute">${r.art}</div></td><td><span class="dot" style="background:${r.cat==="ตู้เซฟ"?"var(--brass)":"var(--steel)"}"></span>${r.cat}</td><td>${r.color}</td><td class="n num">${f(r.price)}</td><td class="n num">${f(r.qty)}</td><td class="n num"><b style="font-weight:500">${f(r.amt)}</b></td><td class="mute">${r.note}</td></tr>`).join(""):'<tr><td colspan="7" class="empty">ไม่พบรายการ</td></tr>'}
+
+async function load(){try{
+ rows=CSV_URL?fromCSV(await(await fetch(CSV_URL+(CSV_URL.includes("?")?"&":"?")+"t="+Date.now())).text()):EMBED.map(r=>({...r}));
+ render();$("asof").textContent="ข้อมูล ณ "+new Date().toLocaleDateString("th-TH",{day:"numeric",month:"long",year:"numeric"});
+ $("foot").textContent=CSV_URL?"ดึงข้อมูลจาก Google Sheets อัตโนมัติ":"ข้อมูลจาก Google Sheets (snapshot "+SNAP_DATE+")";
+}catch(e){$("asof").textContent="โหลดข้อมูลไม่สำเร็จ: "+e.message}}
+
+/* ปุ่มต่าง ๆ */
+const ks=()=>[...$("sel").options].map(o=>o.value).reverse();
+$("sel").onchange=e=>{sel=e.target.value;render()};
+$("prev").onclick=()=>{const k=ks();sel=k[k.indexOf(sel)-1];render()};
+$("next").onclick=()=>{const k=ks();sel=k[k.indexOf(sel)+1];render()};
+document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{cat=b.dataset.c;document.querySelectorAll("[data-c]").forEach(x=>x.classList.toggle("on",x===b));render()});
+document.querySelectorAll("[data-md]").forEach(b=>b.onclick=()=>{md=b.dataset.md;document.querySelectorAll("[data-md]").forEach(x=>x.classList.toggle("on",x===b));render()});
+$("chart").onclick=e=>{const b=e.target.closest(".m");if(b){sel=b.dataset.k;render()}};
+$("chart").onmousemove=e=>{const b=e.target.closest(".m"),t=$("tip");if(!b){t.style.opacity=0;return}t.textContent=b.dataset.t;t.style.opacity=1;t.style.left=Math.min(e.clientX+14,innerWidth-t.offsetWidth-8)+"px";t.style.top=(e.clientY-40)+"px"};
+$("chart").onmouseleave=()=>$("tip").style.opacity=0;
+$("q").oninput=e=>{qs=e.target.value;render()};
+document.querySelectorAll("th[data-k]").forEach(h=>{h.tabIndex=0;const go=()=>{const k=h.dataset.k;sd=sk===k?-sd:-1;sk=k;render()};h.onclick=go;h.onkeydown=e=>{if(e.key==="Enter")go()}});
+$("exp").onclick=()=>{const d=window._tbl||[],c=["model","art","cat","color","price","qty","amt","note"],
+ s="\ufeff"+c.join(",")+"\n"+d.map(r=>c.map(k=>`"${String(r[k]).replace(/"/g,'""')}"`).join(",")).join("\n"),
+ a=document.createElement("a");a.href=URL.createObjectURL(new Blob([s],{type:"text/csv"}));a.download=`kiosk-sales-${sel}.csv`;a.click()};
+function setT(t){document.documentElement.dataset.t=t;try{localStorage.setItem("kt",t)}catch(e){}}
+$("theme").onclick=()=>setT(document.documentElement.dataset.t==="dark"?"light":"dark");
+let st0=null;try{st0=localStorage.getItem("kt")}catch(e){}
+setT(st0||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"));
+load();setInterval(load,REFRESH_MIN*60000);
+</script>
+</body>
+</html>
