@@ -231,8 +231,9 @@ function boom(){if(reduce)return;const cl=["#e0b25a","#8fb0d4","#4cc790","#fff"]
 
 function render(){
  rows.forEach(r=>r.mi=MN.indexOf(r.m));
- const now=new Date(),nk=key(now.getFullYear(),now.getMonth());
- const ys=[...new Set([...rows.map(r=>r.y),now.getFullYear()])];
+ const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+ const cyc=new Date(now.getFullYear(),now.getMonth()+(now.getDate()>=24?1:0),1),nk=key(cyc.getFullYear(),cyc.getMonth());
+ const ys=[...new Set([...rows.map(r=>r.y),cyc.getFullYear()])];
  const ks=ys.flatMap(y=>MN.map((_,i)=>key(y,i))).sort();
  if(!sel||!ks.includes(sel)){const has=rows.some(r=>key(r.y,r.mi)===nk);sel=has?nk:(rows.map(r=>key(r.y,r.mi)).sort().pop()||nk)}
  $("sel").innerHTML=ks.slice().reverse().map(k=>{const[y,m]=k.split("-");return `<option value="${k}" ${k===sel?"selected":""}>${MN[+m-1]} ${+y+543}</option>`}).join("");
@@ -240,10 +241,11 @@ function render(){
 
  const[Y,M]=sel.split("-").map(Number),mi=M-1,mine=r=>key(r.y,r.mi)===sel;
  const cur=rows.filter(mine),target=TARGET_OVERRIDE[sel]||TARGET;
- const total=sum(cur,"amt"),qty=sum(cur,"qty"),dim=new Date(Y,M,0).getDate(),isNow=sel===nk;
- const el=isNow?Math.max(now.getDate()-1,1):dim,left=dim-el,avg=total/el,fc=avg*dim,pct=total/target*100;
+ const cStart=new Date(Y,mi-1,24),cEnd=new Date(Y,mi,23);
+ const total=sum(cur,"amt"),qty=sum(cur,"qty"),dim=Math.round((cEnd-cStart)/86400000)+1,isNow=sel===nk;
+ const el=isNow?Math.max(Math.round((today-cStart)/86400000),1):dim,left=dim-el,avg=total/el,fc=avg*dim,pct=total/target*100;
 
- $("h-label").textContent=`ยอดสะสม ${MN[mi]} ${Y+543}`;$("h-target").textContent="เป้า "+f(target);
+ $("h-label").textContent=`ยอดสะสม ${MN[mi]} ${Y+543} (24 ${SH[(mi+11)%12]}–23 ${SH[mi]})`;$("h-target").textContent="เป้า "+f(target);
  cu("h-total",total);cu("h-pct",pct,x=>x.toFixed(1),"%");dial(pct);
  const st=$("status");
  if(!total){st.className="status mute";st.textContent="ยังไม่มียอดขายในเดือนนี้"}
