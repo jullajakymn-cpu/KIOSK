@@ -149,7 +149,13 @@ table.ftbl td.c{text-align:center}
 <script>
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDkbqG_ykyaj2Ih1Cz5CuE_FJQAULg-kW4OZHPB5fYJTxvCPPQrcAeUpbHzEnGNA/pub?gid=346035930&single=true&output=csv";
 const MN=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
-const MODELS=["SA-350EDP50","SA-500EDP50","SA-530EDP80","SA-600EDP100","SA-151-HSEขาว25","SA-151-YLA ดำ35","SA-71ELF ดำ20","WIFI SA-FF-50","SA-20EDP BM10","SA-20EDP WH10"];
+const MODELS=[
+ {l:"SA-350EDP50",k:"SA-350EDP"},{l:"SA-500EDP50",k:"SA-500EDP"},
+ {l:"SA-530EDP80",k:"SA-530EDP"},{l:"SA-600EDP100",k:"SA-600EDP"},
+ {l:"SA-151-HSEขาว25",k:"SA-151-HSE"},{l:"SA-151-YLA ดำ35",k:"SA-151-YLA"},
+ {l:"SA-71ELF ดำ20",k:"SA-71ELF"},{l:"WIFI SA-FF-50",k:"SA-FF-50"},
+ {l:"SA-20EDP BM10",k:"SA-20EDP",c:/ดำ|BM/i},{l:"SA-20EDP WH10",k:"SA-20EDP",c:/ขาว|WH/i}
+];
 const $=id=>document.getElementById(id), f=n=>Math.round(n).toLocaleString("th-TH");
 const key=(y,i)=>`${y}-${String(i+1).padStart(2,"0")}`;
 let rows=[];
@@ -196,9 +202,8 @@ function render(){
  ]);
  $("p2-tot").textContent=sTot?f(sTot):"";
  $("p2-sum").innerHTML=MODELS.map(m=>{
-  const base=m.split(" ")[0].replace("WIFI","");
-  const q=safes.filter(r=>r.model.toUpperCase().includes(base.toUpperCase())).reduce((a,r)=>a+r.qty,0);
-  return `<div class="sum-item"><span class="nm">${m}</span><span class="ln">${q||""}</span><span>ตัว</span></div>`;
+  const q=safes.filter(r=>r.model.toUpperCase().includes(m.k)&&(!m.c||m.c.test(r.color+r.model))).reduce((a,r)=>a+r.qty,0);
+  return `<div class="sum-item"><span class="nm">${m.l}</span><span class="ln">${q||""}</span><span>ตัว</span></div>`;
  }).join("");
 
  const steels=cur.filter(r=>r.cat==="ตู้เหล็ก"),stTot=steels.reduce((a,r)=>a+r.amt,0);
